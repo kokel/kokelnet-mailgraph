@@ -1,0 +1,162 @@
+
+----------------------------------------------------------------------
+  kokelnet-mailgraph - log parser to create mail and imap statistics
+  by Tobias Hachmer <network@kokelnet.de>
+----------------------------------------------------------------------
+
+mailgraph is a very simple mail and imap statistics RRDtool frontend 
+that produces daily, weekly, monthly and yearly graphs of:
+
+Mail:
+  - received/ sent E-Mails
+  - rejects (also postscreen is supported)
+  - bounces
+  - spam
+  - viruses
+  - received/ sent via IPv4/ IPv6
+  - active-/ incoming-/ maildrop-queue (postfix)
+  - deferred mails (postfix)
+  - delivered (lmtp), e.g. for mailbox servers
+  - greylisted
+  - delayed
+
+IMAP/ POP3:
+  - Logins via IMAP (non TLS/ TLS)
+  - Logins via POP3 (non TLS/ TLS)
+  - failed Logins
+  - Logins via IPv4/ IPv6
+
+Actually, only the regular expressions related to postfix and dovecot
+are under active development. If you wish to have support for other
+MTA- or IMAP-/ POP3-Software feel free to contribute!
+
+
+Required Modules
+----------------
+
+- rrdtool and it's perl module (RRDs)
+- File::Tail (which requires Time::HiRes)
+- Parse::Syslog
+- Data::Validate::IP
+- NetAddr::IP
+
+Note that several Linux distributions will already have these modules as RPMs.
+
+
+Usage
+-----
+
+mailgraph is made of the following scripts:
+
+- mailgraph.pl
+
+  This script does parse syslog and updates the RRD databases 
+  in the current directory.
+
+  It is a deamon and will monitor your log-file for changes.
+  DO NOT RUN IT WITH CRON!
+
+  usage: mailgraph.pl [*options*]
+
+  -h, --help         display this help and exit
+  -v, --verbose      be verbose about what you do
+  -V, --version      output version information and exit
+  -c, --cat          causes the logfile to be only read and not monitored
+  -l, --logfile f    monitor logfile f instead of /var/log/syslog
+  -t, --logtype t    set logfile's type (default: syslog)
+  -y, --year         starting year of the log file (default: current year)
+      --host=HOST    use only entries for HOST (regexp) in syslog
+  -d, --daemon       start in the background
+  --daemon-pid=FILE  write PID to FILE instead of /var/run/mailgraph.pid
+  --daemon-rrd=DIR   write RRDs to DIR instead of /var/log
+  --daemon-log=FILE  write verbose-log to FILE instead of /var/log/mailgraph.log
+  --ignore-localhost ignore mail to/from localhost (used for virus scanner)
+  --ignore-host=HOST ignore mail to/from HOST regexp (used for virus scanner)
+  --no-mail-rrd      don't update the mail rrd
+  --no-virus-rrd     don't update the virus rrd
+  --no-greylist-rrd  don't update the greylist rrd
+  --no-queue-rrd     don't update the queue rrd
+  --no-imap-rrd      don't update the imap rrd
+  --rrd-name=NAME    use NAME.rrd, NAME_virus.rrd and so on for the rrd files
+  --rbl-is-spam      count rbl rejects as spam
+  --virbl-is-virus   count virbl rejects as viruses
+  
+  If -c is not specified, mailgraph will monitor logfile for log entries
+  in logfile (/var/log/syslog unless -l is specified).
+
+  By default mailgraph.pl counts one E-Mail as received and sent. This is related
+  to the different stages of a mail flow in postfix design. It depends on what
+  philosophy you prefer. From my point of view I want that mailgraph.pl running
+  on a mail relay only counts one E-Mail the server receives inbound once. The 
+  same for E-Mails the server receives for outbound.
+
+  To accomplish that there is one array where you can define your IPv4-/ IPv6 
+  hosts and subnets mailgraph.pl will ignore for counting while receiving from
+  or sending to them. For an example see the comment above the array declaration
+  in mailgraph.pl.
+
+  If running mailgraph.pl on mailbox servers you probably want only count that
+  messages which postfix has delivered, e.g. via lmtp or dovecot-deliver to 
+  dovecot. At the moment only mails delivered via lmtp are count as delivered.
+
+- mailgraph.cgi
+
+  This is a CGI script that does generate graphics from the RRD database.
+
+  You have probably to change $rrd to point to where the RRD database is stored.
+
+  Note that "Bounced", "Viruses", and "Spam" are stacked one on another in the
+  graph, whereas "Rejected" is a line.
+
+- mailgraph-imap.cgi
+
+  This is a CGI script that does generate the imap related graphics from the RRD database.
+
+  You have probably to change $rrd_imap to point to where the RRD database is stored.
+
+- mailqueue.sh
+
+  This is a simple bash script which logs the actual values for the postfix active-/
+  incoming- and maildrop queues as well as the amount of the actual deferred mails to 
+  syslog. Example:
+
+  May  4 15:34:01 relay mailqueue: active: 11, deferred: 5
+
+  This is necessary in order mailgraph.pl is able to recognize it.
+
+- create_mailgraph_pics.pl
+
+  This script generates just the pictures of your graphs. This is for people who don't
+  want to access the statistics every time via http://<url>/cgi-bin/mailgraph.cgi !
+  Run this script via cron e.g. every 5 minutes and you are able to integrate the
+  statistic graphs on every website you want by copying them e.g. via scp to the
+  web server you want. It is up to you where you create the pictures. E.g it is also
+  possible to copy the rrd databases to another server and create the pictures there.
+
+
+Installation
+------------
+
+See the file mailgraph-init for an example init script that you can use to
+start mailgraph at system boot.
+
+You need to put mailgraph.cgi and probably mailgraph-imap.cgi on somewhere accessible though a web-server, it
+needs to be executeable and the web-server needs to execute it as a CGI.
+
+In order to count the mailqueue related values run mailqueue.sh every minute via cron.
+
+Example for Installation paths:
+
+/etc/init.d/mailgraph (rename mailgraph-init to mailgraph)
+/usr/local/bin/mailgraph.pl
+/usr/local/bin/create_mailgraph_pics.pl
+/usr/local/bin/mailqueue.sh
+/var/lib/mailgraph/ (path where rrd databases are stored if you are running mailgraph as a daemon and set rrd path)
+/var/run/mailgraph.pid
+
+
+License
+-------
+
+kokelnet-mailgraph is released under the GPL license. See the file COPYING included in
+the distribution for details.
