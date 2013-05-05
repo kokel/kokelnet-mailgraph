@@ -93,27 +93,27 @@ sub graph($$)
 	my ($range, $file) = @_;
 	my $step = $range*$points_per_sample/$xpoints;
 	rrd_graph($range, $file, $ypoints,
-		"DEF:sent=$rrd:sent:AVERAGE",
-		"DEF:msent=$rrd:sent:MAX",
-		"CDEF:rsent=sent,60,*",
-		"CDEF:rmsent=msent,60,*",
-		"CDEF:dsent=sent,UN,0,sent,IF,$step,*",
-		"CDEF:ssent=PREV,UN,dsent,PREV,IF,dsent,+",
-		"AREA:rsent#$color{sent}:Sent    ",
-		'GPRINT:ssent:MAX:total\: %8.0lf msgs',
-		'GPRINT:rsent:AVERAGE:avg\: %5.2lf msgs/min',
-		'GPRINT:rmsent:MAX:max\: %4.0lf msgs/min\l',
-
 		"DEF:recv=$rrd:recv:AVERAGE",
 		"DEF:mrecv=$rrd:recv:MAX",
 		"CDEF:rrecv=recv,60,*",
 		"CDEF:rmrecv=mrecv,60,*",
 		"CDEF:drecv=recv,UN,0,recv,IF,$step,*",
 		"CDEF:srecv=PREV,UN,drecv,PREV,IF,drecv,+",
-		"LINE2:rrecv#$color{received}:Received",
+		"AREA:rrecv#$color{received}:Inbound ",
 		'GPRINT:srecv:MAX:total\: %8.0lf msgs',
 		'GPRINT:rrecv:AVERAGE:avg\: %5.2lf msgs/min',
 		'GPRINT:rmrecv:MAX:max\: %4.0lf msgs/min\l',
+
+		"DEF:sent=$rrd:sent:AVERAGE",
+		"DEF:msent=$rrd:sent:MAX",
+		"CDEF:rsent=sent,60,*",
+		"CDEF:rmsent=msent,60,*",
+		"CDEF:dsent=sent,UN,0,sent,IF,$step,*",
+		"CDEF:ssent=PREV,UN,dsent,PREV,IF,dsent,+",
+		"LINE2:rsent#$color{sent}:Outbound",
+		'GPRINT:ssent:MAX:total\: %8.0lf msgs',
+		'GPRINT:rsent:AVERAGE:avg\: %5.2lf msgs/min',
+		'GPRINT:rmsent:MAX:max\: %4.0lf msgs/min\l',
 	);
 }
 
