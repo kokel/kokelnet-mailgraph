@@ -47,7 +47,7 @@ my $year;
 my $this_minute;
 my $active_value;
 my $deferred_value;
-my %sum = ( sent => 0, received => 0, bounced => 0, rejected => 0, virus => 0, spam => 0, greylisted => 0, delayed => 0, active => 0, deferred => 0, delivered => 0, ipv4 => 0, ipv6 => 0, imaplogin => 0, imaplogintls => 0, imaploginall => 0, imaploginfailed => 0, pop3login => 0, pop3logintls => 0, pop3loginall => 0, pop3loginfailed => 0, ipv4imap => 0, ipv6imap => 0, ipv4pop3 => 0, ipv6pop3 => 0 );
+my %sum = ( sent => 0, received => 0, bounced => 0, rejected => 0, virus => 0, spam => 0, greylisted => 0, delayed => 0, active => 0, deferred => 0, delivered => 0, ipv4 => 0, ipv6 => 0, imaplogin => 0, imaplogintls => 0, imaploginall => 0, imaploginfailed => 0, pop3login => 0, pop3logintls => 0, pop3loginall => 0, pop3loginfailed => 0, ipv4login => 0, ipv6login => 0 );
 my $rrd_inited=0;
 
 my %opt = ();
@@ -78,10 +78,8 @@ sub event_pop3login($);
 sub event_pop3logintls($);
 sub event_pop3loginall($);
 sub event_pop3loginfailed($);
-sub event_ipv4imap($);
-sub event_ipv6imap($);
-sub event_ipv4pop3($);
-sub event_ipv6pop3($);
+sub event_ipv4login($);
+sub event_ipv6login($);
 sub init_rrd($);
 sub update($);
 
@@ -308,10 +306,8 @@ sub init_rrd($)
                                	'DS:pop3logintls:ABSOLUTE:'.($rrdstep*2).':0:U',
                                	'DS:pop3loginall:ABSOLUTE:'.($rrdstep*2).':0:U',
                                	'DS:pop3loginfailed:ABSOLUTE:'.($rrdstep*2).':0:U',
-				'DS:ipv4imap:ABSOLUTE:'.($rrdstep*2).':0:U',
-				'DS:ipv6imap:ABSOLUTE:'.($rrdstep*2).':0:U',
-				'DS:ipv4pop3:ABSOLUTE:'.($rrdstep*2).':0:U',
-				'DS:ipv6pop3:ABSOLUTE:'.($rrdstep*2).':0:U',
+				'DS:ipv4login:ABSOLUTE:'.($rrdstep*2).':0:U',
+				'DS:ipv6login:ABSOLUTE:'.($rrdstep*2).':0:U',
                                	"RRA:AVERAGE:0.5:$day_steps:$realrows",   # day
                                	"RRA:AVERAGE:0.5:$week_steps:$realrows",  # week
                                	"RRA:AVERAGE:0.5:$month_steps:$realrows", # month
@@ -684,10 +680,10 @@ sub process_line($)
 					if($text =~ /rip\=(\S+)\,\slip\=/) {
 						my $client = $1;
 						if(is_ipv4($client)) {
-							event($time, 'ipv4imap');
+							event($time, 'ipv4login');
 						}
 						elsif(is_ipv6($client)) {
-							event($time, 'ipv6imap');
+							event($time, 'ipv6login');
 						}
 					}
                                         event($time, 'imaplogintls');
@@ -697,10 +693,10 @@ sub process_line($)
 					if($text =~ /rip\=(\S+)\,\slip\=/) {
 						my $client = $1;
 						if(is_ipv4($client)) {
-							event($time, 'ipv4imap');
+							event($time, 'ipv4login');
 						}
 						elsif(is_ipv6($client)) {
-							event($time, 'ipv6imap');
+							event($time, 'ipv6login');
 						}
 					}
                                         event($time, 'imaplogin');
@@ -719,10 +715,10 @@ sub process_line($)
 					if($text =~ /rip\=(\S+)\,\slip\=/) {
 						my $client = $1;
 						if(is_ipv4($client)) {
-							event($time, 'ipv4pop3');
+							event($time, 'ipv4login');
 						}
 						elsif(is_ipv6($client)) {
-							event($time, 'ipv6pop3');
+							event($time, 'ipv6login');
 						}
 					}
                                         event($time, 'pop3logintls');
@@ -732,10 +728,10 @@ sub process_line($)
 					if($text =~ /rip\=(\S+)\,\slip\=/) {
 						my $client = $1;
 						if(is_ipv4($client)) {
-							event($time, 'ipv4imap');
+							event($time, 'ipv4login');
 						}
 						elsif(is_ipv6($client)) {
-							event($time, 'ipv6imap');
+							event($time, 'ipv6login');
 						}
 					}
                                         event($time, 'pop3login');
@@ -805,21 +801,21 @@ sub update($)
 	return 1 if $m == $this_minute;
 	return 0 if $m < $this_minute;
 
-	print "update $this_minute:$sum{sent}:$sum{received}:$sum{bounced}:$sum{rejected}:$sum{virus}:$sum{spam}:$sum{greylisted}:$sum{delayed}:$sum{active}:$sum{deferred}:$sum{delivered}:$sum{ipv4}:$sum{ipv6}:$sum{imaplogin}:$sum{imaplogintls}:$sum{imaploginall}:$sum{imaploginfailed}:$sum{pop3login}:$sum{pop3logintls}:$sum{pop3loginall}:$sum{pop3loginfailed}:$sum{ipv4imap}:$sum{ipv6imap}:$sum{ipv4pop3}:$sum{ipv6pop3}\n" if $opt{verbose};
+	print "update $this_minute:$sum{sent}:$sum{received}:$sum{bounced}:$sum{rejected}:$sum{virus}:$sum{spam}:$sum{greylisted}:$sum{delayed}:$sum{active}:$sum{deferred}:$sum{delivered}:$sum{ipv4}:$sum{ipv6}:$sum{imaplogin}:$sum{imaplogintls}:$sum{imaploginall}:$sum{imaploginfailed}:$sum{pop3login}:$sum{pop3logintls}:$sum{pop3loginall}:$sum{pop3loginfailed}:$sum{ipv4login}:$sum{ipv6login}\n" if $opt{verbose};
 	
 	RRDs::update $rrd, "$this_minute:$sum{sent}:$sum{received}:$sum{bounced}:$sum{rejected}:$sum{delivered}:$sum{ipv4}:$sum{ipv6}" unless $opt{'no-mail-rrd'};
 	RRDs::update $rrd_virus, "$this_minute:$sum{virus}:$sum{spam}" unless $opt{'no-virus-rrd'};
 	RRDs::update $rrd_greylist, "$this_minute:$sum{greylisted}:$sum{delayed}" unless $opt{'no-greylist-rrd'};
 	RRDs::update $rrd_queue, "$this_minute:$sum{active}:$sum{deferred}" unless $opt{'no-queue-rrd'};
-	RRDs::update $rrd_imap, "$this_minute:$sum{imaplogin}:$sum{imaplogintls}:$sum{imaploginall}:$sum{imaploginfailed}:$sum{pop3login}:$sum{pop3logintls}:$sum{pop3loginall}:$sum{pop3loginfailed}:$sum{ipv4imap}:$sum{ipv6imap}:$sum{ipv4pop3}:$sum{ipv6pop3}" unless $opt{'no-imap-rrd'};
+	RRDs::update $rrd_imap, "$this_minute:$sum{imaplogin}:$sum{imaplogintls}:$sum{imaploginall}:$sum{imaploginfailed}:$sum{pop3login}:$sum{pop3logintls}:$sum{pop3loginall}:$sum{pop3loginfailed}:$sum{ipv4login}:$sum{ipv6login}" unless $opt{'no-imap-rrd'};
 	if($m > $this_minute+$rrdstep) {
 		for(my $sm=$this_minute+$rrdstep;$sm<$m;$sm+=$rrdstep) {
-			print "update $sm:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0 (SKIP)\n" if $opt{verbose};
+			print "update $sm:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0 (SKIP)\n" if $opt{verbose};
 			RRDs::update $rrd, "$sm:0:0:0:0:0:0:0" unless $opt{'no-mail-rrd'};
 			RRDs::update $rrd_virus, "$sm:0:0" unless $opt{'no-virus-rrd'};
 			RRDs::update $rrd_greylist, "$sm:0:0" unless $opt{'no-greylist-rrd'};
 			RRDs::update $rrd_queue, "$sm:0:0" unless $opt{'no-queue-rrd'};
-			RRDs::update $rrd_imap, "$sm:0:0:0:0:0:0:0:0:0:0:0:0" unless $opt{'no-imap-rrd'};;
+			RRDs::update $rrd_imap, "$sm:0:0:0:0:0:0:0:0:0:0" unless $opt{'no-imap-rrd'};;
 		}
 	}
 
@@ -845,10 +841,8 @@ sub update($)
         $sum{pop3logintls}=0;
         $sum{pop3loginall}=0;
         $sum{pop3loginfailed}=0;
-	$sum{ipv4imap}=0;
-	$sum{ipv6imap}=0;
-	$sum{ipv4pop3}=0;
-	$sum{ipv6pop3}=0;
+	$sum{ipv4login}=0;
+	$sum{ipv6login}=0;
 	return 1;
 }
 
