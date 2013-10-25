@@ -29,10 +29,11 @@ my $tmp_dir = '/tmp/mailgraph'; # temporary directory where to store the images
 # note: the following ranges must match with the RRA ranges
 # created in mailgraph.pl, otherwise the totals won't match.
 my @graphs = (
-	{ title => 'Last Day',   seconds => 3600*24,        },
-	{ title => 'Last Week',  seconds => 3600*24*7,      },
-	{ title => 'Last Month', seconds => 3600*24*7*5,    },
-	{ title => 'Last Year',  seconds => 3600*24*7*5*12, },
+	{ title => 'Last Day',   seconds => 3600*24,         },
+	{ title => 'Last Week',  seconds => 3600*24*7,       },
+	{ title => 'Last Month', seconds => 3600*24*31,      },
+	{ title => 'Last 6 Months', seconds => 3600*24*31*6, },
+	{ title => 'Last Year',  seconds => 3600*24*31*12,   },
 );
 
 my %color = (
