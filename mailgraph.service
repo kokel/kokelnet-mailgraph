@@ -1,0 +1,9 @@
+[Unit]
+Description=Mailgraph Daemon
+
+[Service]
+ExecStart=/usr/bin/mailgraph.pl -d -l /var/log/syslog --daemon-rrd /var/lib/mailgraph
+KillMode=process
+
+[Install]
+WantedBy=multi-user.target
