@@ -43,11 +43,12 @@ my $rrd_virus = "mailgraph_virus.rrd";
 my $rrd_greylist = "mailgraph_greylist.rrd";
 my $rrd_queue = "mailgraph_queue.rrd";
 my $rrd_imap = "mailgraph_imap.rrd";
+my $rrd_postscreen = "mailgraph_postscreen.rrd";
 my $year;
 my $this_minute;
 my $active_value;
 my $deferred_value;
-my %sum = ( sent => 0, received => 0, bounced => 0, rejected => 0, virus => 0, spam => 0, greylisted => 0, delayed => 0, active => 0, deferred => 0, delivered => 0, ipv4 => 0, ipv6 => 0, imaplogin => 0, imaplogintls => 0, imaploginall => 0, imaploginfailed => 0, pop3login => 0, pop3logintls => 0, pop3loginall => 0, pop3loginfailed => 0, ipv4login => 0, ipv6login => 0 );
+my %sum = ( sent => 0, received => 0, bounced => 0, rejected => 0, virus => 0, spam => 0, greylisted => 0, delayed => 0, active => 0, deferred => 0, delivered => 0, ipv4 => 0, ipv6 => 0, psother => 0, pspregreet => 0, pscmdpipe => 0, psnonsmtpcmd => 0, psbarenewline => 0, psdnsbl => 0, pspassnew => 0, pspassold => 0, psrejected => 0, imaplogin => 0, imaplogintls => 0, imaploginall => 0, imaploginfailed => 0, pop3login => 0, pop3logintls => 0, pop3loginall => 0, pop3loginfailed => 0, ipv4login => 0, ipv6login => 0 );
 my $rrd_inited=0;
 
 my %opt = ();
@@ -69,6 +70,16 @@ sub event_deferred($);
 sub event_delivered($);
 sub event_ipv4($);
 sub event_ipv6($);
+# postscreen events
+sub event_psother($);
+sub event_pspregreet($);
+sub event_pscmdpipe($);
+sub event_psnonsmtpcmd($);
+sub event_psbarenewline($);
+sub event_psdnsbl($);
+sub event_pspassnew($);
+sub event_pspassold($);
+sub event_psrejected($);
 # imapgraph events
 sub event_imaplogin($);
 sub event_imaplogintls($);
@@ -103,8 +114,9 @@ sub usage
 	print "  --no-mail-rrd      don't update the mail rrd\n";
 	print "  --no-virus-rrd     don't update the virus rrd\n";
         print "  --no-greylist-rrd  don't update the greylist rrd\n";
-	print "  --no-queue-rrd  don't update the queue rrd\n";
+	print "  --no-queue-rrd     don't update the queue rrd\n";
 	print "  --no-imap-rrd      don't update the imap rrd\n";
+	print "  --no-postscreen-rrd        don't update the postscreen rrd\n";
 	print "  --rrd-name=NAME    use NAME.rrd, NAME_virus.rrd, and so on for the rrd files\n";
 	print "  --rbl-is-spam      count rbl rejects as spam\n";
 	print "  --virbl-is-virus   count virbl rejects as viruses\n";
@@ -120,7 +132,7 @@ sub main
 		'daemon_pid|daemon-pid=s', 'daemon_rrd|daemon-rrd=s',
 		'daemon_log|daemon-log=s', 'ignore-localhost!', 'ignore-host=s@',
 		'no-mail-rrd', 'no-virus-rrd', 'no-greylist-rrd', 'no-queue-rrd', 'no-imap-rrd',
-		'rrd_name|rrd-name=s', 'rbl-is-spam', 'virbl-is-virus'
+		'no-postscreen-rrd', 'rrd_name|rrd-name=s', 'rbl-is-spam', 'virbl-is-virus'
 		) or exit(1);
 	usage if $opt{help};
 
@@ -137,6 +149,7 @@ sub main
 	$rrd_greylist   = $opt{rrd_name}."_greylist.rrd" if defined $opt{rrd_name};
 	$rrd_queue	= $opt{rrd_name}."_queue.rrd" if defined $opt{rrd_name};
 	$rrd_imap	= $opt{rrd_name}."_imap.rrd" if defined $opt{rrd_name};
+	$rrd_postscreen = $opt{rrd_name}."_postscreen.rrd" if defined $opt{rrd_name};
 
 	# compile --ignore-host regexps
 	if(defined $opt{'ignore-host'}) {
@@ -322,6 +335,32 @@ sub init_rrd($)
                	$this_minute = RRDs::last($rrd) + $rrdstep;
        	}
 
+        # postscreen rrd
+        if(! -f $rrd_postscreen and ! $opt{'no-postscreen-rrd'}) {
+                RRDs::create($rrd_postscreen, '--start', $m, '--step', $rrdstep,
+				'DS:psother:ABSOLUTE:'.($rrdstep*2).':0:U',
+				'DS:pspregreet:ABSOLUTE:'.($rrdstep*2).':0:U',
+                                'DS:pscmdpipe:ABSOLUTE:'.($rrdstep*2).':0:U',
+                                'DS:psnonsmtpcmd:ABSOLUTE:'.($rrdstep*2).':0:U',
+                                'DS:psbarenewline:ABSOLUTE:'.($rrdstep*2).':0:U',
+                                'DS:psdnsbl:ABSOLUTE:'.($rrdstep*2).':0:U',
+                                'DS:pspassnew:ABSOLUTE:'.($rrdstep*2).':0:U',
+                                'DS:pspassold:ABSOLUTE:'.($rrdstep*2).':0:U',
+                                'DS:psrejected:ABSOLUTE:'.($rrdstep*2).':0:U',
+                                "RRA:AVERAGE:0.5:$day_steps:$realrows",   # day
+                                "RRA:AVERAGE:0.5:$week_steps:$realrows",  # week
+                                "RRA:AVERAGE:0.5:$month_steps:$realrows", # month
+                                "RRA:AVERAGE:0.5:$year_steps:$realrows",  # year
+                                "RRA:MAX:0.5:$day_steps:$realrows",   # day
+                                "RRA:MAX:0.5:$week_steps:$realrows",  # week
+                                "RRA:MAX:0.5:$month_steps:$realrows", # month
+                                "RRA:MAX:0.5:$year_steps:$realrows",  # year
+                                );
+        }
+        elsif(-f $rrd_postscreen and ! defined $rrd_postscreen) {
+                $this_minute = RRDs::last($rrd) + $rrdstep;
+        }
+
 	$rrd_inited=1;
 }
 
@@ -432,16 +471,42 @@ sub process_line($)
 			}
 		}
                 elsif($prog eq 'postscreen') {
-                        if($text =~ /NOQUEUE: reject: RCPT from .* /) {
-                                if($text =~ /Service unavailable; /) {
-					event($time, 'rejected');
-                                }
-                                elsif($text =~ /Protocol error; /) {
-					event($time, 'rejected');
-                                }
-                                elsif($text =~ /too many connections /) {
-					event($time, 'rejected');
-                                }
+                        if($text =~ /NOQUEUE: reject: RCPT from .* Service unavailable;/) {
+				event($time, 'rejected');
+				event($time, 'psrejected');
+                        }
+			elsif($text =~ /NOQUEUE: reject: CONNECT from .* too many connections/) {
+				event($time, 'psother');
+			}
+			elsif($text =~ /NOQUEUE: reject: CONNECT from .* all server ports busy/) {
+                                event($time, 'psother');
+                        }
+			elsif($text =~ /^PREGREET .* after .* from /) {
+                                event($time, 'pspregreet');
+                        }
+			elsif($text =~ /^COMMAND PIPELINING from .* after .* /) {
+				event($time, 'pscmdpipe');
+			}
+                        elsif($text =~ /^NON-SMTP COMMAND from .* after .* /) {
+                                event($time, 'psnonsmtpcmd');
+                        }
+                        elsif($text =~ /^BARE NEWLINE from .* after .* /) {
+                                event($time, 'psbarenewline');
+                        }
+                        elsif($text =~ /^DNSBL rank .* for .* /) {
+                                event($time, 'psdnsbl');
+                        }
+			elsif($text =~ /^HANGUP after .* from .* in .* /) {
+                                event($time, 'psother');
+                        }
+			elsif($text =~ /^COMMAND TIME LIMIT from .* after .* /) {
+                                event($time, 'psother');
+                        }
+			elsif($text =~ /^COMMAND COUNT LIMIT from .* after .* /) {
+                                event($time, 'psother');
+                        }
+			elsif($text =~ /^COMMAND LENGTH LIMIT from .* after .* /) {
+                                event($time, 'psother');
                         }
                 }
 	}
@@ -801,21 +866,23 @@ sub update($)
 	return 1 if $m == $this_minute;
 	return 0 if $m < $this_minute;
 
-	print "update $this_minute:$sum{sent}:$sum{received}:$sum{bounced}:$sum{rejected}:$sum{virus}:$sum{spam}:$sum{greylisted}:$sum{delayed}:$sum{active}:$sum{deferred}:$sum{delivered}:$sum{ipv4}:$sum{ipv6}:$sum{imaplogin}:$sum{imaplogintls}:$sum{imaploginall}:$sum{imaploginfailed}:$sum{pop3login}:$sum{pop3logintls}:$sum{pop3loginall}:$sum{pop3loginfailed}:$sum{ipv4login}:$sum{ipv6login}\n" if $opt{verbose};
+	print "update $this_minute:$sum{sent}:$sum{received}:$sum{bounced}:$sum{rejected}:$sum{virus}:$sum{spam}:$sum{greylisted}:$sum{delayed}:$sum{active}:$sum{deferred}:$sum{delivered}:$sum{ipv4}:$sum{ipv6}:$sum{psother}:$sum{pspregreet}:$sum{pscmdpipe}:$sum{psnonsmtpcmd}:$sum{psbarenewline}:$sum{psdnsbl}:$sum{pspassnew}:$sum{pspassold}:$sum{psrejected}:$sum{imaplogin}:$sum{imaplogintls}:$sum{imaploginall}:$sum{imaploginfailed}:$sum{pop3login}:$sum{pop3logintls}:$sum{pop3loginall}:$sum{pop3loginfailed}:$sum{ipv4login}:$sum{ipv6login}\n" if $opt{verbose};
 	
 	RRDs::update $rrd, "$this_minute:$sum{sent}:$sum{received}:$sum{bounced}:$sum{rejected}:$sum{delivered}:$sum{ipv4}:$sum{ipv6}" unless $opt{'no-mail-rrd'};
 	RRDs::update $rrd_virus, "$this_minute:$sum{virus}:$sum{spam}" unless $opt{'no-virus-rrd'};
 	RRDs::update $rrd_greylist, "$this_minute:$sum{greylisted}:$sum{delayed}" unless $opt{'no-greylist-rrd'};
 	RRDs::update $rrd_queue, "$this_minute:$sum{active}:$sum{deferred}" unless $opt{'no-queue-rrd'};
 	RRDs::update $rrd_imap, "$this_minute:$sum{imaplogin}:$sum{imaplogintls}:$sum{imaploginall}:$sum{imaploginfailed}:$sum{pop3login}:$sum{pop3logintls}:$sum{pop3loginall}:$sum{pop3loginfailed}:$sum{ipv4login}:$sum{ipv6login}" unless $opt{'no-imap-rrd'};
+	RRDs::update $rrd_postscreen, "$this_minute:$sum{psother}:$sum{pspregreet}:$sum{pscmdpipe}:$sum{psnonsmtpcmd}:$sum{psbarenewline}:$sum{psdnsbl}:$sum{pspassnew}:$sum{pspassold}:$sum{psrejected}" unless $opt{'no-postscreen-rrd'};
 	if($m > $this_minute+$rrdstep) {
 		for(my $sm=$this_minute+$rrdstep;$sm<$m;$sm+=$rrdstep) {
-			print "update $sm:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0 (SKIP)\n" if $opt{verbose};
+			print "update $sm:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0 (SKIP)\n" if $opt{verbose};
 			RRDs::update $rrd, "$sm:0:0:0:0:0:0:0" unless $opt{'no-mail-rrd'};
 			RRDs::update $rrd_virus, "$sm:0:0" unless $opt{'no-virus-rrd'};
 			RRDs::update $rrd_greylist, "$sm:0:0" unless $opt{'no-greylist-rrd'};
 			RRDs::update $rrd_queue, "$sm:0:0" unless $opt{'no-queue-rrd'};
-			RRDs::update $rrd_imap, "$sm:0:0:0:0:0:0:0:0:0:0" unless $opt{'no-imap-rrd'};;
+			RRDs::update $rrd_imap, "$sm:0:0:0:0:0:0:0:0:0:0" unless $opt{'no-imap-rrd'};
+			RRDs::update $rrd_postscreen, "$sm:0:0:0:0:0:0:0:0:0" unless $opt{'no-postscreen-rrd'};
 		}
 	}
 
@@ -833,6 +900,15 @@ sub update($)
 	$sum{delivered}=0;
         $sum{ipv4}=0;
         $sum{ipv6}=0;
+	$sum{psother}=0;
+	$sum{pspregreet}=0;
+	$sum{pscmdpipe}=0;
+	$sum{psnonsmtpcmd}=0;
+	$sum{psbarenewline}=0;
+	$sum{psdnsbl}=0;
+	$sum{pspassnew}=0;
+	$sum{pspassold}=0;
+	$sum{psrejected}=0;
         $sum{imaplogin}=0;
         $sum{imaplogintls}=0;
         $sum{imaploginall}=0;
@@ -880,6 +956,7 @@ B<mailgraph> [I<options>...]
  --no-ps-rrd        don't update the postscreen rrd
  --no-greylist-rrd  don't update the greylist rrd
  --no-imap-rrd	    don't update the imap rrd
+ --no-postscreen-rrd      don't update the postscreen rrd
  --rrd-name=NAME    use NAME.rrd, NAME_virus.rrd, and so on for the rrd files
  --rbl-is-spam      count rbl rejects as spam
  --virbl-is-virus   count virbl rejects as viruses
