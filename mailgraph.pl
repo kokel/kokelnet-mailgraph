@@ -471,7 +471,13 @@ sub process_line($)
 			}
 		}
                 elsif($prog eq 'postscreen') {
-                        if($text =~ /NOQUEUE: reject: RCPT from .* Service unavailable;/) {
+			if($text =~ /PASS NEW .*/) {
+                                event($time, 'pspassnew');
+                        }
+                        elsif($text =~ /PASS OLD .*/) {
+                                event($time, 'pspassold');
+                        }
+                        elsif($text =~ /NOQUEUE: reject: RCPT from .* Service unavailable;/) {
 				event($time, 'rejected');
 				event($time, 'psrejected');
                         }
@@ -481,31 +487,31 @@ sub process_line($)
 			elsif($text =~ /NOQUEUE: reject: CONNECT from .* all server ports busy/) {
                                 event($time, 'psother');
                         }
-			elsif($text =~ /^PREGREET .* after .* from /) {
+			elsif($text =~ /PREGREET .* after .* from .*/) {
                                 event($time, 'pspregreet');
                         }
-			elsif($text =~ /^COMMAND PIPELINING from .* after .* /) {
+			elsif($text =~ /COMMAND PIPELINING from .* after .* /) {
 				event($time, 'pscmdpipe');
 			}
-                        elsif($text =~ /^NON-SMTP COMMAND from .* after .* /) {
+                        elsif($text =~ /NON-SMTP COMMAND from .* after .* /) {
                                 event($time, 'psnonsmtpcmd');
                         }
-                        elsif($text =~ /^BARE NEWLINE from .* after .* /) {
+                        elsif($text =~ /BARE NEWLINE from .* after .* /) {
                                 event($time, 'psbarenewline');
                         }
-                        elsif($text =~ /^DNSBL rank .* for .* /) {
+                        elsif($text =~ /DNSBL rank .* for .* /) {
                                 event($time, 'psdnsbl');
                         }
-			elsif($text =~ /^HANGUP after .* from .* in .* /) {
+			elsif($text =~ /HANGUP after .* from .* in .* /) {
                                 event($time, 'psother');
                         }
-			elsif($text =~ /^COMMAND TIME LIMIT from .* after .* /) {
+			elsif($text =~ /COMMAND TIME LIMIT from .* after .* /) {
                                 event($time, 'psother');
                         }
-			elsif($text =~ /^COMMAND COUNT LIMIT from .* after .* /) {
+			elsif($text =~ /COMMAND COUNT LIMIT from .* after .* /) {
                                 event($time, 'psother');
                         }
-			elsif($text =~ /^COMMAND LENGTH LIMIT from .* after .* /) {
+			elsif($text =~ /COMMAND LENGTH LIMIT from .* after .* /) {
                                 event($time, 'psother');
                         }
                 }
