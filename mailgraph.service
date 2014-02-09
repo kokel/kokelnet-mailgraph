@@ -2,8 +2,8 @@
 Description=Mailgraph Daemon
 
 [Service]
+Type=forking
 ExecStart=/usr/bin/mailgraph.pl -d -l /var/log/syslog --daemon-rrd /var/lib/mailgraph
-KillMode=process
 
 [Install]
 WantedBy=multi-user.target
