@@ -18,7 +18,7 @@ use File::Tail;
 use Getopt::Long;
 use POSIX 'setsid';
 use Parse::Syslog;
-use Data::Validate::IP qw(is_ipv4 is_ipv6);
+use Net::IP qw(ip_is_ipv4 ip_is_ipv6);
 use NetAddr::IP;
 
 my $VERSION = "0.1";
@@ -390,10 +390,10 @@ sub process_line($)
 						my $network = NetAddr::IP->new($subnet);
 						return if $ip->within($network);
 					}
-					if(is_ipv4($relay)) {
+					if(ip_is_ipv4($relay)) {
 						event($time, 'ipv4');
 					}
-					elsif(is_ipv6($relay)) {
+					elsif(ip_is_ipv6($relay)) {
 						event($time, 'ipv6');
 					}
 					event($time, 'sent');
@@ -417,27 +417,24 @@ sub process_line($)
 			}
 		}
 		elsif($prog eq 'smtpd') {
-			if($text =~ /^[0-9A-Za-z]+: client=(\S+)/) {
+			if($text =~ /^(?:[\dA-F]+|[\dB-DF-HJ-NP-TV-Zb-df-hj-np-tv-z]+): client=(\S+)/) {
 				my $client = $1;
 				return if $opt{'ignore-localhost'} and
 					$client =~ /\[127\.0\.0\.1\]$/;
 				return if $opt{'ignore-host'} and
 					$client =~ /$opt{'ignore-host'}/oi;
-				if($text =~ /orig_client=\S+\[(\S+)\]/) {
-					my $client = $1;
 					my $ip = NetAddr::IP->new($client);
 					foreach $subnet (@subnets) {
 						my $network = NetAddr::IP->new($subnet);
 						return if $ip->within($network);
 					}
-					if(is_ipv4($client)) {
+					if(ip_is_ipv4($client)) {
 						event($time, 'ipv4');
 					}
-					elsif(is_ipv6($client)) {
+					elsif(ip_is_ipv6($client)) {
 						event($time, 'ipv6');
 					}
 					event($time, 'received');
-				}
 			}
 			elsif($opt{'virbl-is-virus'} and $text =~ /^(?:[0-9A-Za-z]+: |NOQUEUE: )?reject: .*: 554.* blocked using virbl.dnsbl.bit.nl/) {
 				event($time, 'virus');
@@ -750,10 +747,10 @@ sub process_line($)
                                 if($text =~ /TLS/) {
 					if($text =~ /rip\=(\S+)\,\slip\=/) {
 						my $client = $1;
-						if(is_ipv4($client)) {
+						if(ip_is_ipv4($client)) {
 							event($time, 'ipv4login');
 						}
-						elsif(is_ipv6($client)) {
+						elsif(ip_is_ipv6($client)) {
 							event($time, 'ipv6login');
 						}
 					}
@@ -763,10 +760,10 @@ sub process_line($)
                                 else {
 					if($text =~ /rip\=(\S+)\,\slip\=/) {
 						my $client = $1;
-						if(is_ipv4($client)) {
+						if(ip_is_ipv4($client)) {
 							event($time, 'ipv4login');
 						}
-						elsif(is_ipv6($client)) {
+						elsif(ip_is_ipv6($client)) {
 							event($time, 'ipv6login');
 						}
 					}
@@ -785,10 +782,10 @@ sub process_line($)
                                 if($text =~ /TLS/) {
 					if($text =~ /rip\=(\S+)\,\slip\=/) {
 						my $client = $1;
-						if(is_ipv4($client)) {
+						if(ip_is_ipv4($client)) {
 							event($time, 'ipv4login');
 						}
-						elsif(is_ipv6($client)) {
+						elsif(ip_is_ipv6($client)) {
 							event($time, 'ipv6login');
 						}
 					}
@@ -798,10 +795,10 @@ sub process_line($)
                                 else {
 					if($text =~ /rip\=(\S+)\,\slip\=/) {
 						my $client = $1;
-						if(is_ipv4($client)) {
+						if(ip_is_ipv4($client)) {
 							event($time, 'ipv4login');
 						}
-						elsif(is_ipv6($client)) {
+						elsif(ip_is_ipv6($client)) {
 							event($time, 'ipv6login');
 						}
 					}
@@ -1018,3 +1015,4 @@ S<David Schweikert E<lt>david@schweikert.chE<gt>>
 =cut
 
 # vi: sw=8
+
