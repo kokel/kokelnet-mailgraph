@@ -21,4 +21,4 @@ queuedir=`/usr/sbin/postconf -h queue_directory`
 active=`find $queuedir/incoming $queuedir/active $queuedir/maildrop -type f -print | wc -l | awk '{print $1}'`
 deferred=`find $queuedir/deferred -type f -print | wc -l | awk '{print $1}'`
 
-$LOGGER -t mailqueue active: $active, deferred: $deferred
+$LOGGER -p mail.info -t mailqueue active: $active, deferred: $deferred
