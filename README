@@ -124,6 +124,10 @@ mailgraph is made of the following scripts:
 
   This is necessary in order mailgraph.pl is able to recognize it.
 
+- mailqueue.cron
+
+  This is the cronjob which calls mailqueue.sh
+
 - create_mailgraph_pics.pl
 
   This script generates just the pictures of your graphs. This is for people who don't
@@ -143,7 +147,7 @@ start mailgraph at system boot.
 You need to put mailgraph.cgi and probably mailgraph-imap.cgi on somewhere accessible though a web-server, it
 needs to be executeable and the web-server needs to execute it as a CGI.
 
-In order to count the mailqueue related values run mailqueue.sh every minute via cron.
+In order to count the mailqueue related values run mailqueue.sh every minute via cron (copy mailqueue.cron to /etc/cron.d/).
 
 Example for Installation paths:
 
