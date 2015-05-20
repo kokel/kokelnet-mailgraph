@@ -333,8 +333,8 @@ sub graph_imap($$)
         my ($range, $file) = @_;
         my $step = $range*$points_per_sample/$xpoints;
         rrd_graph($range, $file, $ypoints_imap,
-                "DEF:imaploginall=$rrd:imaploginall:AVERAGE",
-                "DEF:mimaploginall=$rrd:imaploginall:MAX",
+                "DEF:imaploginall=$rrd_imap:imaploginall:AVERAGE",
+                "DEF:mimaploginall=$rrd_imap:imaploginall:MAX",
                 "CDEF:rimaploginall=imaploginall,60,*",
                 "CDEF:rmimaploginall=mimaploginall,60,*",
                 "CDEF:dimaploginall=imaploginall,UN,0,imaploginall,IF,$step,*",
@@ -344,8 +344,8 @@ sub graph_imap($$)
                 'GPRINT:rimaploginall:AVERAGE:avg\: %5.2lf logins/min',
                 'GPRINT:rmimaploginall:MAX:max\: %4.0lf logins/min\l',
 
-                "DEF:imaploginfailed=$rrd:imaploginfailed:AVERAGE",
-                "DEF:mimaploginfailed=$rrd:imaploginfailed:MAX",
+                "DEF:imaploginfailed=$rrd_imap:imaploginfailed:AVERAGE",
+                "DEF:mimaploginfailed=$rrd_imap:imaploginfailed:MAX",
                 "CDEF:rimaploginfailed=imaploginfailed,60,*",
                 "CDEF:rmimaploginfailed=mimaploginfailed,60,*",
                 "CDEF:dimaploginfailed=imaploginfailed,UN,0,imaploginfailed,IF,$step,*",
@@ -413,11 +413,11 @@ sub main()
         	graph_grey($graphs[4]{seconds}, "$tmp_dir/$uri/mailgraph_grey_1y.png");
 
                 # create imap pngs
-                graph_imap($graphs[0]{seconds}, "$pic_dir/imapgraph_imap_1d.png");
-                graph_imap($graphs[1]{seconds}, "$pic_dir/imapgraph_imap_7d.png");
-                graph_imap($graphs[2]{seconds}, "$pic_dir/imapgraph_imap_4w.png");
-		graph_imap($graphs[3]{seconds}, "$pic_dir/imapgraph_imap_6m.png");
-                graph_imap($graphs[4]{seconds}, "$pic_dir/imapgraph_imap_1y.png");
+                graph_imap($graphs[0]{seconds}, "$tmp_dir/imapgraph_imap_1d.png");
+                graph_imap($graphs[1]{seconds}, "$tmp_dir/imapgraph_imap_7d.png");
+                graph_imap($graphs[2]{seconds}, "$tmp_dir/imapgraph_imap_4w.png");
+		graph_imap($graphs[3]{seconds}, "$tmp_dir/imapgraph_imap_6m.png");
+                graph_imap($graphs[4]{seconds}, "$tmp_dir/imapgraph_imap_1y.png");
 }
 
 main;

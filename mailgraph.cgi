@@ -295,7 +295,7 @@ HEADER
 <hr/>
 <table><tr><td>
 <a href="https://github.com/kokel/kokelnet-mailgraph">KokelNET Mailgraph</a> $VERSION
-by <a href="mailto:network@kokelnet.de">Tobias Hachmer</a></td>
+by <a href="mailto:network\@kokelnet.de">Tobias Hachmer</a></td>
 <td align="right">
 <a href="http://oss.oetiker.ch/rrdtool/"><img src="http://oss.oetiker.ch/rrdtool/.pics/rrdtool.gif" alt="" width="120" height="34"/></a>
 </td></tr>
@@ -317,7 +317,7 @@ sub send_image($)
 		exit 1;
 	};
 
-	print "Content-type: image/png\n" unless $ARGV[0];
+	print "Content-type: image/png\n\n";
 	print "Content-length: ".((stat($file))[7])."\n" unless $ARGV[0];
 	print "\n" unless $ARGV[0];
 	open(IMG, $file) or die;
@@ -358,7 +358,7 @@ sub main()
 		}
 		elsif($img =~ /^(\d+)-q$/) {
 			my $file = "$tmp_dir/$uri/mailgraph_$1_queue.png";
-			graph_queue7($graphs[$1]{seconds}, $file);
+			graph_queue($graphs[$1]{seconds}, $file);
 			send_image($file);
 		}
 		else {
@@ -371,3 +371,4 @@ sub main()
 }
 
 main;
+

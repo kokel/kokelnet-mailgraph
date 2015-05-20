@@ -24,7 +24,7 @@ my $ypoints_proto = 96;
 my $rrd = 'mailgraph.rrd'; # path to where the RRD database is
 my $rrd_virus = 'mailgraph_virus.rrd'; # path to where the Virus RRD database is
 my $rrd_imap = 'mailgraph_imap.rrd'; # path to where the Greylist RRD database is
-my $tmp_dir = '/tmp/mailgraph'; # temporary directory where to store the images
+my $tmp_dir = '/tmp/mailgraph-imap'; # temporary directory where to store the images
 
 # note: the following ranges must match with the RRA ranges
 # created in mailgraph.pl, otherwise the totals won't match.
@@ -311,13 +311,13 @@ HEADER
 <hr/>
 <table><tr><td>
 <a href="https://github.com/kokel/kokelnet-mailgraph">KokelNET Mailgraph</a> $VERSION
-by <a href="mailto:network@kokelnet.de">Tobias Hachmer</a></td>
+by <a href="mailto:network\@kokelnet.de">Tobias Hachmer</a></td>
 <td align="right">
-<a href="http://oss.oetiker.ch/rrdtool/"><img src="http://oss.oetiker.ch/rrdtool/.pics/rrdtool.gif" alt="" width="120" height="34"/></a>
+<a href="https://oss.oetiker.ch/rrdtool/"><img src="https://oss.oetiker.ch/rrdtool/.pics/rrdtool.gif" alt="" width="120" height="34"/></a>
 </td></tr>
 <tr><td>
-Based upon <a href="http://mailgraph.schweikert.ch/">Mailgraph</a>
-by <a href="http://david.schweikert.ch/">David Schweikert</a></td>
+Based upon <a href="https://mailgraph.schweikert.ch/">Mailgraph</a>
+by <a href="https://david.schweikert.ch/">David Schweikert</a></td>
 </td></tr>
 </table>
 </body></html>
@@ -333,7 +333,7 @@ sub send_image($)
 		exit 1;
 	};
 
-	print "Content-type: image/png\n" unless $ARGV[0];
+	print "Content-type: image/png\n\n";
 	print "Content-length: ".((stat($file))[7])."\n" unless $ARGV[0];
 	print "\n" unless $ARGV[0];
 	open(IMG, $file) or die;
@@ -382,3 +382,4 @@ sub main()
 }
 
 main;
+
